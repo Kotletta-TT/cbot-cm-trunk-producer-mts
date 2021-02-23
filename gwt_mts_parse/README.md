@@ -10,9 +10,7 @@ from gwt_mts_parse.MtsVats import VATS
 vats = VATS(address='vpbx.mts.ru', 
             login='your_login', 
             password='your_pass', 
-            x_gwt_permutation='your_token', 
-            contract_url_abonents='CaXXXX',
-            count_sim=your_number)
+            contract_url_abonents='CaXXXX')
 
 vats.get_trunks()
 ```
@@ -23,7 +21,7 @@ vats.get_trunks()
 
 num_list = [9990000000, 9991111111, 9992222222]
 
-vats.trunk_add_device(num_list)
+vats.trunk_add_device(num_list, action='add')
 ```
 
 ## Общие разъяснения:
@@ -52,8 +50,8 @@ vats.trunk_add_device(num_list)
 > `2,0,0,1,8,1,0,0,0,0,0,0` - данный транк активирован, не помечен для удаления, и имеет рабочую привязку (по сути обычный рабочий транк)  
 > `2,0,0,0,8,0,1,0,1,0,0,0` - данный транк выключен, помечен на удаление  
 
-Параметр `contract_url_abonents` при создании VATS - это конец PayLoad, он указывается при запросе всех Абонентов(транков):
-Параметр `count_sim` количество активных/нужных сим-карт, данное число необходимо для правильной работы пагинации
+Параметр `contract_url_abonents` при создании VATS - это конец PayLoad, он указывается при запросе всех Абонентов(транков):  
+
 
 ```
 |{filter}|7|0|8|{CaXXXX}|0|8|{pagination}|8|{count_page}|0|
@@ -79,8 +77,5 @@ AbonentDeviceFormGwtService
 
 ## Проблемы кода
 
-1. Брать X-GWT-Permutation из запроса
-2. Нет логгирования
-3. Не всегда возвращаются все значения - проблема где то в реализации ассинхронности (не успевает вернуться ответ до запроса regexp)?
-4. Решить вопрос с пагинацией
-5. Доработать ассинхронность сделать ее более короче и лаконичней
+1. Нет логгирования
+2. Доработать ассинхронность сделать ее более короче и лаконичней
