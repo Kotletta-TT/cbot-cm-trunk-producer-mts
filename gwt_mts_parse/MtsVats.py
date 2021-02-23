@@ -3,7 +3,7 @@ import aiohttp
 import asyncio
 import string
 import logging
-from long_string_requests import TRUNKS_LIST_PAYLOAD, TRUNK_INFO_PAYLOAD, TRUNK_ADD_SIP, TRUNK_DESTROY_SIP
+from gwt_mts_parse.long_string_requests import TRUNKS_LIST_PAYLOAD, TRUNK_INFO_PAYLOAD, TRUNK_ADD_SIP, TRUNK_DESTROY_SIP
 
 
 class VATS:
@@ -36,12 +36,12 @@ class VATS:
 
 
     async def get_login(self):
-        conn = aiohttp.TCPConnector(limit=40)
+        conn = aiohttp.TCPConnector(limit=30)
         self.session = aiohttp.ClientSession(connector=conn)
         url = f'https://{self.address}/{self.part_auth_url}'
         data = aiohttp.FormData()
         data.add_fields(['j_username', self.user], ['j_password', self.password])
-        response = await self.query(url=url, payload=data)
+        await self.query(url=url, payload=data)
         x_gwt_permutation = await self.get_x_gwt_permutation()
         self.headers = {'X-GWT-Module-Base': self.base_api_url,
                         'X-GWT-Permutation': x_gwt_permutation,
@@ -63,13 +63,12 @@ class VATS:
         payload = TRUNK_INFO_PAYLOAD.format(link=link, num_func='31')
         response = await self.query(url=url, payload=payload, headers=self.headers)
         if '//OK' in response:
+            logging.debug(f'Correct response to: {link}')
             trunk = self.parse_dirt_trunk(response)
             trunk['inner_name'] = link
             self.trunk_json[trunk['trunk_phone']] = trunk['value']
         if '//EX' in response:
-            payload = TRUNK_INFO_PAYLOAD.format(link=link, num_func='32')
-            response = await self.query(url=url, payload=payload, headers=self.headers)
-            trunk = self.parse_another_dirt_trunk(response)
+            logging.warning(f'Error response to: {link}')
 
     async def query(self, url, payload=None, headers=None, method='POST'):
         if headers and payload:
@@ -80,15 +79,13 @@ class VATS:
             response = await self.session.request(method=method, url=url, data=payload, ssl=False)
         else:
             response = await self.session.request(method=method, url=url, ssl=False)
-
         if response.status == 200:
-            test = await response.text()
-            if '//EX' in test:
+            text = await response.text()
+            if '//EX' in text:
                 logging.warning(f'Incorrect response: {payload[-200:]}')
-                raise ValueError
-            return await response.text()
+            return text
         else:
-            raise ConnectionError
+            logging.warning(f'Connection ERROR! Status code: {response.status}')
 
     async def close_session(self):
         await self.session.close()

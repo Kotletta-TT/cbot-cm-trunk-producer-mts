@@ -48,19 +48,19 @@ def request_api(channel):
         vats = VATS(address=obj['address'],
                     user=obj['login'],
                     password=obj['password'],
-                    x_gwt_permutation=obj['x_gwt_permutation'],
-                    contract_url_abonents=obj['contract_url_abonents'],
-                    count_sim=obj['count_sim'])
+                    contract_url_abonents=obj['contract_url_abonents'])
 
         trunks = vats.get_trunks()
 
-        for trunk in trunks:
+        for phone, trunk in trunks.items():
             send_trunk = Trunk(provider=obj['provider'],
                                obj=obj['obj'],
                                trunk_username=trunk['trunk_login'],
                                trunk_password=trunk['trunk_password'],
-                               phone=trunk['trunk_phone'],
-                               attributes={},
+                               phone=phone,
+                               attributes={'sip_device': trunk['trunk_sip_device'],
+                                           'sip_enabled': trunk['trunk_sip_enabled'],
+                                           'trunk_identify_line': trunk['trunk_identify_line']},
                                lines=int(obj['lines']))
 
             message = json.dumps(send_trunk.__dict__)

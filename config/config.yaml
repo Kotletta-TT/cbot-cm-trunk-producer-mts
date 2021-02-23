@@ -6,4 +6,4 @@ rabbitmq:
 log-level: INFO
 log-name: TRUNK-INFO
 
-timeout-request: 0
+timeout-request: 30

@@ -1,7 +1,7 @@
 import csv
 import argparse
 from prettytable import PrettyTable
-from MtsVats import VATS
+from gwt_mts_parse.MtsVats import VATS
 
 parser = argparse.ArgumentParser(description='Add/Activate trunk SIP-Device in MTS VATS')
 parser.add_argument('login', type=str, help='Login format +7-9XXXXXXXXXX')
