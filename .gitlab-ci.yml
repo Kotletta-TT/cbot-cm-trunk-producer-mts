@@ -1,0 +1,114 @@
+stages:
+    - test
+    - build
+    - push
+    - deploy
+
+image: cr.yandex/$YC_REGISTRY_ID/cbot-python-builder:latest
+
+.base_job:
+  before_script:
+    - |
+        set -e
+
+        echo "Configuring yc cli"
+        yc config set token $YC_TOKEN
+        yc config set cloud-id $YC_CLOUD_ID
+        yc config set folder-id $YC_FOLDER_ID
+        yc config set compute-default-zone $YC_COMPUTE_ZONE
+
+        echo "Configuring docker"
+        yc container registry configure-docker
+
+test_job:
+  stage: test
+  extends: .base_job
+  when: on_success
+  script: |
+    set -e
+    pipenv lock --requirements > /tmp/requirements.txt
+    pipenv lock --dev --requirements > /tmp/requirements_dev.txt
+    pip install --ignore-installed -r /tmp/requirements.txt
+    pip install --ignore-installed -r /tmp/requirements_dev.txt
+    ./test.sh
+
+build_image_job:
+  stage: build
+  extends: .base_job
+  when: on_success
+  artifacts:
+    untracked: true
+  script:
+    - |
+        set -e
+
+        echo "Docker is at $DOCKER_HOST"
+        cat ~/.docker/config.json >/dev/null
+
+        date=$(date +%Y.%m.%d)
+        TAG="$date.$CI_PIPELINE_IID"
+
+        docker build -t cr.yandex/$YC_REGISTRY_ID/$CI_PROJECT_NAME:$TAG -f docker/Dockerfile .
+        docker save cr.yandex/$YC_REGISTRY_ID/$CI_PROJECT_NAME:$TAG|gzip > $CI_PROJECT_NAME:$TAG.tar.gz
+        echo "$TAG" > .buildinfo
+
+push_image_job:
+  stage: push
+  extends: .base_job
+  when: on_success
+  only:
+    refs:
+      - master
+  dependencies:
+    - build_image_job
+  artifacts:
+    untracked: true
+  script:
+    - |
+        set -e
+
+        echo "Docker is at $DOCKER_HOST"
+
+        TAG=$(cat .buildinfo)
+        echo "Build number is $TAG"
+
+        docker load -i $CI_PROJECT_NAME:$TAG.tar.gz
+        docker push cr.yandex/$YC_REGISTRY_ID/$CI_PROJECT_NAME:$TAG
+        rm $CI_PROJECT_NAME:$TAG.tar.gz
+
+deploy_image_job:
+  stage: deploy
+  extends: .base_job
+  when: on_success
+  only:
+    refs:
+      - master
+  dependencies:
+    - push_image_job
+  script:
+    - |
+        set -e
+
+        TAG=$(cat .buildinfo)
+        echo "Latest build number is $TAG"
+
+        echo "Cloning stacks"
+        cd /tmp
+        chmod 600 $SSH_KEY_SVC
+        eval "$(ssh-agent -s)"
+        ssh-add $SSH_KEY_SVC
+
+        GIT_SSH_COMMAND="ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no" git clone git@gitlab.prod.rk-env.ru:comm/stacks.git
+
+        echo "Updateing build for service $CI_PROJECT_NAME to $TAG"
+        cd stacks
+        chmod +x update_build.sh
+        ./update_build.sh $CI_PROJECT_NAME $TAG
+
+        echo "Pushing changes back to gitlab to invoke deployment"
+        git config user.email "svc@rk-env.ru"
+        git config user.name "Service account"
+        git add .
+        git commit -m "Service $CI_PROJECT_NAME version updated to $TAG"
+        GIT_SSH_COMMAND="ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no" git push
+        echo "Done"

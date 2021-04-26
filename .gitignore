@@ -5,3 +5,7 @@ __pycache__/
 venv/
 contracts.yaml
 gwt_mts_parse/decode_gwt.txt
+!docker/Dockerfile
+Dockerfile
+docker-compose.yml
+vats_shell.py

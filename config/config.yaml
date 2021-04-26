@@ -1,9 +1,0 @@
-rabbitmq:
-  host: localhost
-  port: 5672
-  queue: trunks
-
-log-level: INFO
-log-name: TRUNK-INFO
-
-timeout-request: 30

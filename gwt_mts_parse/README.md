@@ -4,12 +4,13 @@
 Теперь еще умеет активировать новые транки и восстанавливать(создавать) SIP-устройства
 
 Пример запроса:
+
 ```python
 from gwt_mts_parse.MtsVats import VATS
 
-vats = VATS(address='vpbx.mts.ru', 
-            login='your_login', 
-            password='your_pass', 
+vats = VATS(address='vpbx.mts.ru',
+            login='your_login',
+            password='your_pass',
             contract_url_abonents='CaXXXX')
 
 vats.get_trunks()
