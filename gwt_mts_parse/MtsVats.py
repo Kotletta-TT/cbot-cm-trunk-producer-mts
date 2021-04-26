@@ -23,6 +23,7 @@ class VATS:
         self.password = password
         self.part_auth_url = 'j_spring_security_check'
         self.base_api_url = f'https://{address}/vpbxGwt/'
+        self.trunk_codes = ''
 
     def calc_pagination(self, count_sim):
         alphabet = string.ascii_uppercase
@@ -33,6 +34,14 @@ class VATS:
         raw_data = await self.query(method='GET', url=url)
         return re.search(r"bc='(\w{32})'", raw_data).group(1)
 
+    async def get_trunk_codes(self, x_gwt_permutation):
+        trunk_codes = {}
+        url = f'{self.base_api_url}{x_gwt_permutation}.cache.js'
+        raw_data = await self.query(method='GET', url=url)
+        trunk_codes['trunk_info_code'] = re.search(r"'DispatcherGwtService','(\w{32})", raw_data).group(1)
+        trunk_codes['trunk_list_code'] = re.search(r"'AbonentBrowserGwtService','(\w{32})", raw_data).group(1)
+        return trunk_codes
+
     async def get_login(self):
         conn = aiohttp.TCPConnector(limit=30)
         self.session = aiohttp.ClientSession(connector=conn)
@@ -42,6 +51,7 @@ class VATS:
                         ['j_password', self.password])
         await self.query(url=url, payload=data)
         x_gwt_permutation = await self.get_x_gwt_permutation()
+        self.trunk_codes = await self.get_trunk_codes(x_gwt_permutation)
         self.headers = {'X-GWT-Module-Base': self.base_api_url,
                         'X-GWT-Permutation': x_gwt_permutation,
                         'Content-Type': 'text/x-gwt-rpc; charset=UTF-8'}
@@ -49,7 +59,7 @@ class VATS:
     async def get_list_trunks(self, page):
         contract_inner_link = f'|-2|7|0|8|{self.contract_url_abonents}|0|0|8|{page}|8|Bk|0|'
         url = f'{self.base_api_url}AbonentBrowserGwtService'
-        payload = TRUNKS_LIST_PAYLOAD.format(contract_inner_link)
+        payload = TRUNKS_LIST_PAYLOAD.format(trunk_list_code=self.trunk_codes['trunk_list_code'], contract=contract_inner_link)
         response = await self.query(url=url, payload=payload,
                                     headers=self.headers)
         online_trunks = set(re.findall(r"C.{5}',2,0,0",
@@ -61,7 +71,7 @@ class VATS:
 
     async def get_trunk(self, link):
         url = f'{self.base_api_url}DispatcherGwtService'
-        payload = TRUNK_INFO_PAYLOAD.format(link=link, num_func='31')
+        payload = TRUNK_INFO_PAYLOAD.format(trunk_info_code=self.trunk_codes['trunk_info_code'], link=link, num_func='31')
         response = await self.query(url=url, payload=payload,
                                     headers=self.headers)
         if '//OK' in response:
@@ -85,11 +95,11 @@ class VATS:
                                                   data=payload, ssl=False)
         else:
             response = await self.session.request(method=method, url=url,
-                                                  ssl=False)
+                                                                ssl=False)
         if response.status == 200:
             text = await response.text()
             if '//EX' in text:
-                logging.warning(f'Incorrect response: {payload[-200:]}')
+                logging.warning(f'Incorrect response: {payload}')
             return text
         else:
             logging.warning(
@@ -111,7 +121,7 @@ class VATS:
         trunk_identify_line = re.search(r'"(mobsip_\d{10})"',
                                         dirt_trunk).group(1)
         if trunk:
-            trunk_phone = trunk.group(1).split('_')[1]
+            trunk_phone = '7' + trunk.group(1).split('_')[1]
             trunk_login = trunk.group(1).split('"')[0]
             trunk_password = bytes(trunk.group(2).split('"')[0],
                                    'utf-8').decode('unicode_escape')

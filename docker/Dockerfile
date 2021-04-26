@@ -11,5 +11,6 @@ FROM cr.yandex/crps9i3eull3qc5u9m17/cbot-python:latest as cbot-trunk-info-produc
 COPY --from=cbot-trunk-info-producer-mts-builder /install /usr/local
 COPY . /app
 WORKDIR /app
+RUN sed -i -e 's/CipherString = DEFAULT@SECLEVEL=2/CipherString = DEFAULT@SECLEVEL=1/' /etc/ssl/openssl.cnf
 
 CMD [ "$@" ]

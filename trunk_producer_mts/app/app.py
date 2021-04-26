@@ -33,15 +33,14 @@ def request_api():
         for phone, trunk in trunks.items():
             send_trunk = Trunk(provider=obj['provider'],
                                obj=obj['obj'],
-                               trunk_name=trunk['trunk_login'],
+                               trunk_name=trunk['trunk_identify_line'],
                                trunk_username=trunk['trunk_login'],
                                trunk_password=trunk['trunk_password'],
                                phone=phone,
                                attributes={
                                    'sip_device': trunk['trunk_sip_device'],
                                    'sip_enabled': trunk['trunk_sip_enabled'],
-                                   'trunk_identify_line': trunk[
-                                       'trunk_identify_line']},
+                                   },
                                lines=int(obj['lines']))
 
             message = json.dumps(send_trunk.__dict__)
