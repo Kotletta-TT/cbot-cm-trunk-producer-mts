@@ -39,8 +39,7 @@ def request_api():
                                phone=phone,
                                attributes={
                                    'sip_device': trunk['trunk_sip_device'],
-                                   'sip_enabled': trunk['trunk_sip_enabled'],
-                                   },
+                                   'sip_enabled': trunk['trunk_sip_enabled']},
                                lines=int(obj['lines']))
 
             message = json.dumps(send_trunk.__dict__)
