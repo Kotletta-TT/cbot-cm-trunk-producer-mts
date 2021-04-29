@@ -10,7 +10,9 @@ from gwt_mts_parse.long_string_requests import TRUNKS_LIST_PAYLOAD, \
 
 
 class VATS:
-    logging.basicConfig(level=logging.DEBUG)
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s %(levelname)s %(threadName)s %(message)s")
 
     def __init__(self, address, user, password, contract_url_abonents) -> None:
         self.unique_payloads_links = []
