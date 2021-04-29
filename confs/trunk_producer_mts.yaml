@@ -10,7 +10,7 @@ rmq:
 log-level: INFO
 log-name: TRUNK-INFO
 
-timeout-request: 0
+timeout-request: 30
 
 contracts:
   - address: vpbx.mts.ru
