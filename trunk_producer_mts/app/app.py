@@ -27,8 +27,11 @@ def request_api():
                     user=obj['login'],
                     password=obj['password'],
                     contract_url_abonents=obj['contract_url_abonents'])
-
-        trunks = vats.get_trunks()
+        try:
+            trunks = vats.get_trunks()
+        except TypeError:
+            logger.ERROR("Connection error!")
+            time.sleep(TIMEOUT_REQUEST)
 
         for phone, trunk in trunks.items():
             send_trunk = Trunk(provider=obj['provider'],
