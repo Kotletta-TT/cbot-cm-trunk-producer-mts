@@ -31,7 +31,7 @@ def request_api():
             trunks = vats.get_trunks()
         except TypeError:
             logger.error("Connection error!")
-            time.sleep(TIMEOUT_REQUEST)
+            break
 
         for phone, trunk in trunks.items():
             send_trunk = Trunk(provider=obj['provider'],
