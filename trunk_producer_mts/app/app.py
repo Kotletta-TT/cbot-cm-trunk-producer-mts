@@ -1,5 +1,6 @@
 import json
 import time
+from trunk_producer_mts.db.cache_db import CacheDB
 
 from conf import RABBIT_QUEUE, LOG_NAME, TIMEOUT_REQUEST, DATA_ACCESS, \
     RABBIT_EXCHANGE
@@ -10,6 +11,7 @@ from trunk_producer_mts.models.models import Trunk
 
 logger = log_on(LOG_NAME)
 rmq = RMQConsumer()
+db = CacheDB()
 
 
 def smart_timeout(attempts):
@@ -21,6 +23,7 @@ def smart_timeout(attempts):
 
 def request_api():
     for obj in DATA_ACCESS:
+        time.sleep(20)
         logger.info(
             f" Request to object: {obj['obj']} - provider: {obj['provider']}")
         vats = VATS(address=obj['address'],
@@ -44,7 +47,8 @@ def request_api():
                                    'sip_device': trunk['trunk_sip_device'],
                                    'sip_enabled': trunk['trunk_sip_enabled']},
                                lines=int(obj['lines']))
-
+            if not (db.update_db(send_trunk)):
+                continue
             message = json.dumps(send_trunk.__dict__)
             rmq.publish(RABBIT_EXCHANGE, message)
             logger.info(

@@ -45,7 +45,7 @@ class VATS:
         return trunk_codes
 
     async def get_login(self):
-        conn = aiohttp.TCPConnector(limit=2)
+        conn = aiohttp.TCPConnector(limit=1)
         self.session = aiohttp.ClientSession(connector=conn)
         url = f'https://{self.address}/{self.part_auth_url}'
         data = aiohttp.FormData()
