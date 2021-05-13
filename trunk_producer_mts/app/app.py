@@ -47,7 +47,7 @@ def request_api():
                                    'sip_device': trunk['trunk_sip_device'],
                                    'sip_enabled': trunk['trunk_sip_enabled']},
                                lines=int(obj['lines']))
-            if not (db.update_db(send_trunk)):
+            if not db.update_db(send_trunk):
                 continue
             message = json.dumps(send_trunk.__dict__)
             rmq.publish(RABBIT_EXCHANGE, message)
