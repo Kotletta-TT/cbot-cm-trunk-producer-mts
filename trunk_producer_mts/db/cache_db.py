@@ -35,7 +35,6 @@ class CacheDB:
         return 1
 
     def check_update(self, data):
-        data.attributes = str(data.attributes)
         self.cur.execute("select * from trunkcache where trunk_name=:trunk_name", {"trunk_name": data.trunk_name}) # noqa
         row = self.cur.fetchone()
         if not row:
@@ -59,7 +58,7 @@ class CacheDB:
             data.trunk_password,
             data.phone,
             data.active,
-            data.attributes,
+            str(data.attributes),
             data.updated,
             data.lines)
         self.cur.execute("insert into trunkcache values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", test_list) # noqa
@@ -71,7 +70,7 @@ class CacheDB:
         test_list = (
             data.phone,
             data.active,
-            data.attributes,
+            str(data.attributes),
             data.updated,
             data.trunk_name)
         self.cur.execute(query, test_list)
