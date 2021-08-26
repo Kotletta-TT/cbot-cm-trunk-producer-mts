@@ -3,6 +3,7 @@ __pycache__/
 .vscode/
 .idea/
 venv/
+confs/prod/
 contracts.yaml
 gwt_mts_parse/decode_gwt.txt
 !docker/Dockerfile

@@ -14,16 +14,16 @@ timeout-request: 30
 
 contracts:
   - address: vpbx.mts.ru
-    login: +7-9875200872
-    password: 95MsosBGi^5J
-    obj: MTS ВАТС-Пенза
+    login: +7-9999999999
+    password: xxxxxxxxxx
+    obj: SOME_OBJ
     provider: MTS
-    contract_url_abonents: CaONwx
+    contract_url_abonents: some_id
     lines: 3
   - address: vpbx.mts.ru
-    login: +7-9170812010
-    password: 3BntUxG}yGn
-    obj: MTS ВАТС-Астрахань
+    login: +7-9999999999
+    password: xxxxxxxxxx
+    obj: SOME_OBJ
     provider: MTS
-    contract_url_abonents: CaTEZB
+    contract_url_abonents: some_id
     lines: 3

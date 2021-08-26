@@ -88,16 +88,16 @@ class VATS:
         if headers and payload:
             response = await self.session.request(method=method, url=url,
                                                   data=payload,
-                                                  headers=headers, ssl=False)
+                                                  headers=headers, ssl=True)
         elif headers and not payload:
             response = await self.session.request(method=method, url=url,
-                                                  headers=headers, ssl=False)
+                                                  headers=headers, ssl=True)
         elif payload and not headers:
             response = await self.session.request(method=method, url=url,
-                                                  data=payload, ssl=False)
+                                                  data=payload, ssl=True)
         else:
             response = await self.session.request(method=method, url=url,
-                                                                ssl=False)
+                                                                ssl=True)
         if response.status == 200:
             text = await response.text()
             if '//EX' in text:
@@ -169,13 +169,15 @@ class VATS:
                 trunk = all_trunks[str_num]
                 if action == 'add':
                     payload = TRUNK_ADD_SIP.format(
+                        trunk_info_code=self.trunk_codes['trunk_info_code'],
                         identify_line=trunk['trunk_identify_line'],
                         inner_link=trunk['trunk_inner_link'],
                         sip_obj=trunk['trunk_sip_obj'],
                         contract_link=self.contract_url_abonents)
                 if action == 'del':
                     payload = TRUNK_DESTROY_SIP.format(
-                        trunk['trunk_inner_link'])
+                        trunk_info_code=self.trunk_codes['trunk_info_code'],
+                        trunk_inner_link=trunk['trunk_inner_link'])
                 query_list.append(loop.create_task(
                     self.query(url=url, payload=payload,
                                headers=self.headers)))

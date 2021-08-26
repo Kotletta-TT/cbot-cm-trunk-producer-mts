@@ -8,6 +8,9 @@ aiohttp = "*"
 pika = "*"
 pyyaml = "*"
 prettytable = "*"
+pandas = "*"
+openpyxl = "*"
+pydantic = "*"
 
 [dev-packages]
 pycodestyle = "*"
