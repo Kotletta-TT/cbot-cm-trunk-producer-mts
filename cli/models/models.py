@@ -42,3 +42,13 @@ class CliData(BaseModel):
                 raise ValueError(f'Number: {num} incorrect, number must '
                                  f'start 7 and length 11 digits')
         return nums
+
+
+EXCEL_STRUCT = {
+    "phone": [],
+    "login": [],
+    "password": [],
+    "sip_device": [],
+    "sip_enabled": [],
+    "identify_line": []
+}
