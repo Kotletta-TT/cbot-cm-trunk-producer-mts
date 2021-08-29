@@ -34,4 +34,4 @@ def parse_config(filename: str) -> List[Config] or None:
     return configs
 
 
-parse_config('lol')
+# parse_config('lol')

@@ -1,10 +1,8 @@
-import argparse
-
-import pandas as pd
-
-from gwt_mts_parse.MtsVats import VATS
-from cli.utils.logger import init_logger
+from cli.models.models import CliData, Config, Trunk
 from cli.utils.arg_parse import arg_parse
+from cli.utils.config_loader import parse_config
+from gwt_mts_parse.MtsVats import VATS
+from typing import Dict, List
 
 """
 This CLI-interface make to automatization activates multiple trunks in MTS 
@@ -31,6 +29,8 @@ Flag --nums accepts a list of arguments format, if not flag --action,
             7xxxxxxxxxx"
     or
     --nums "79999999999 78888888888 7xxxxxxxxxx"
+    
+    IMPORTANT: The quotation marks surrounding the list are needed!
 
 Flag -v filter display/upload to current view, options pass to arguments:
     all
@@ -63,18 +63,73 @@ How it works:
 """
 
 
-def run():
-    logger = init_logger('CLI')
-    cli_data = arg_parse()
-    print('test run func')
+def get_conf(cli_data: CliData, filename: str) -> Config:
+    configs = parse_config(filename)
+    for conf in configs:
+        if cli_data.login == conf.login:
+            return conf
+    raise ValueError(f'Login {cli_data.login} not found in config')
 
-# if args.nums:
-#     nums = args.nums.split('\n')
-#
-# vats = VATS(args.url, args.login, args.password, args.gwt_id)
-#
-# trunks = vats.get_trunks()
-#
+
+def check_nums_arg(trunks: Dict[str, Dict], nums: List[str]) -> List[Trunk]:
+    find_trunks: List[Trunk] = []
+    if nums:
+        for num in nums:
+            if num in trunks:
+                trunk = Trunk(
+                    phone=num,
+                    login=trunks[num]['trunk_login'],
+                    password=trunks[num]['trunk_password'],
+                    sip_device=trunks[num]['trunk_sip_device'],
+                    sip_enabled=trunks[num]['trunk_sip_enabled'],
+                    identify_line=trunks[num]['trunk_inner_link']
+                )
+                find_trunks.append(trunk)
+    else:
+        for k, v in trunks.items():
+            trunk = Trunk(
+                phone=k,
+                login=v['trunk_login'],
+                password=v['trunk_password'],
+                sip_device=v['trunk_sip_device'],
+                sip_enabled=v['trunk_sip_enabled'],
+                identify_line=v['identify_line']
+            )
+            find_trunks.append(trunk)
+    return find_trunks
+
+
+def run():
+    cli_data = arg_parse()
+    config = get_conf(cli_data, 'confs/prod/trunk_producer_mts.yaml')
+    vats = VATS(config.address,
+                config.login,
+                config.password,
+                config.inner_id)
+    trunks = vats.get_trunks()
+    trunks = check_nums_arg(trunks, cli_data.nums)
+    if cli_data.display:
+        display_view(trunks, cli_data)
+    if cli_data.filename:
+        upload_to_file(trunks, cli_data)
+    if cli_data.action:
+        action(trunks, cli_data)
+
+
+def display_view(trunks, cli_data):
+    pass
+
+
+def upload_to_file(trunks, cli_data):
+    pass
+
+
+def action(trunks, cli_data):
+    pass
+
+
+
+
 # dict_to_write = {"line": [],
 #                  "authname": [],
 #                  "password": []}
