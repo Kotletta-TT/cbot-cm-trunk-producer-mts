@@ -1,8 +1,13 @@
-from cli.models.models import CliData, Config, Trunk
-from cli.utils.arg_parse import arg_parse
-from cli.utils.config_loader import parse_config
-from gwt_mts_parse.MtsVats import VATS
+import sys
 from typing import Dict, List
+
+import pandas as pd
+
+from cli.models.models import CliData, Config, Trunk, EXCEL_STRUCT
+from cli.utils.arg_parse import arg_parse, CHOICE_VIEW
+from cli.utils.config_loader import parse_config
+from cli.utils.print_table import print_table
+from gwt_mts_parse.MtsVats import VATS
 
 """
 This CLI-interface make to automatization activates multiple trunks in MTS 
@@ -62,6 +67,8 @@ How it works:
     on current use flags.
 """
 
+ALL = CHOICE_VIEW
+
 
 def get_conf(cli_data: CliData, filename: str) -> Config:
     configs = parse_config(filename)
@@ -93,7 +100,7 @@ def check_nums_arg(trunks: Dict[str, Dict], nums: List[str]) -> List[Trunk]:
                 password=v['trunk_password'],
                 sip_device=v['trunk_sip_device'],
                 sip_enabled=v['trunk_sip_enabled'],
-                identify_line=v['identify_line']
+                identify_line=v['trunk_identify_line']
             )
             find_trunks.append(trunk)
     return find_trunks
@@ -113,39 +120,66 @@ def run():
     if cli_data.filename:
         upload_to_file(trunks, cli_data)
     if cli_data.action:
-        action(trunks, cli_data)
+        action(vats, trunks, cli_data)
+        trunks = vats.get_trunks()
+        trunks = check_nums_arg(trunks, [])
+        cli_data.filter = 'all'
+        cli_data.view = ['all', ]
+        user_input = input('For display result press "p" for save press "f" '
+                           'exit press any key')
+        if user_input.lower() == 'p':
+            display_view(trunks, cli_data)
+        elif user_input.lower() == 'f':
+            upload_to_file(trunks, cli_data)
+        else:
+            sys.exit()
 
 
-def display_view(trunks, cli_data):
-    pass
+def get_filtered_list(trunks: List[Trunk], cli_data: CliData) -> List[Trunk]:
+    if cli_data.filter == 'activate':
+        return [trunk for trunk in trunks if trunk.sip_enabled]
+    elif cli_data.filter == 'deactivate':
+        return [trunk for trunk in trunks if not trunk.sip_enabled]
+    else:
+        return trunks
 
 
-def upload_to_file(trunks, cli_data):
-    pass
+def get_view_list(cli_data: CliData) -> List[str]:
+    if 'all' in cli_data.view:
+        return ALL
+    else:
+        return cli_data.view
 
 
-def action(trunks, cli_data):
-    pass
+def get_upload_fields(cli_data: CliData) -> Dict[str, List]:
+    if 'all' in cli_data.view:
+        return EXCEL_STRUCT
+    else:
+        return {field: [] for field in cli_data.view}
 
 
+def display_view(trunks: List[Trunk], cli_data: CliData):
+    filter_trunks = get_filtered_list(trunks, cli_data)
+    view_list = get_view_list(cli_data)
+    print_table(view_list, filter_trunks)
 
 
-# dict_to_write = {"line": [],
-#                  "authname": [],
-#                  "password": []}
-#
-# phone_num = []
-#
-# for key, value in trunks.items():
-#     phone_num.append(key)
-#     dict_to_write['line'].append(value['trunk_identify_line'])
-#     dict_to_write['authname'].append(value['trunk_login'])
-#     dict_to_write['password'].append(value['trunk_password'])
-#
-# df = pd.DataFrame(dict_to_write)
-# timestamp = datetime.strftime(datetime.now(), format="%Y-%m-%d_%H-%M")
-# filename = f'vats_{timestamp}.xlsx'
-#
-# df.to_excel(filename, sheet_name='list_vats', index=False)
+def upload_to_file(trunks: List[Trunk], cli_data: CliData):
+    filter_trunks = get_filtered_list(trunks, cli_data)
+    upload_fields = get_upload_fields(cli_data)
+    for field in upload_fields:
+        upload_fields[field] = [trunk.dict()[field] for trunk in filter_trunks]
+    df = pd.DataFrame(upload_fields)
+    df.to_excel(cli_data.filename, sheet_name='list_vats', index=False)
 
-# vats.trunk_list_action(phone_num, 'add')
+
+def action(vats: VATS, trunks: List[Trunk], cli_data: CliData):
+    if cli_data.action and cli_data.nums:
+        vats.trunk_list_action(cli_data.nums, 'add')
+    elif cli_data.action == 'a':
+        vats.trunk_list_action(
+            [trunk.phone for trunk in trunks if not trunk.sip_enabled], 'add')
+    elif cli_data.action == 'd':
+        vats.trunk_list_action(
+            [trunk.phone for trunk in trunks if trunk.sip_enabled], 'del')
+

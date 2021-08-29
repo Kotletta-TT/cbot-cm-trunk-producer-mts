@@ -2,14 +2,13 @@ import argparse
 import re
 from datetime import datetime
 
-from cli.models.models import CliData
+from cli.models.models import CliData, PHONE, LOGIN, PASSWORD, SIP_DEVICE, \
+    SIP_ENABLED, IDENTIFY_LINE
 from cli.utils.help_message import *
 
 CHOICE_FILTER = ['all', 'activate', 'deactivate']
-CHOICE_ACTION = ['a', 'd', 'nums']
-CHOICE_VIEW = ['phone', 'login', 'password', 'sip_device',
-               'sip_enabled',
-               'identify_line']
+CHOICE_ACTION = ['a', 'd']
+CHOICE_VIEW = [PHONE, LOGIN, PASSWORD, SIP_DEVICE, SIP_ENABLED, IDENTIFY_LINE]
 
 
 class NumsAction(argparse.Action):
@@ -51,8 +50,7 @@ def arg_parse() -> CliData:
                             choices=CHOICE_VIEW)
     arg_engine.add_argument("--action",
                             type=str,
-                            nargs='?',
-                            const='nums',
+                            nargs='+',
                             default=None,
                             dest='action',
                             choices=CHOICE_ACTION,
